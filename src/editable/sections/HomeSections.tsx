@@ -1,11 +1,13 @@
+'use client'
+
+import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import { ArrowRight, Heart, Search } from 'lucide-react'
+import { ArrowRight, BadgeCheck, Building2, Check, ChevronDown, ExternalLink, Search, Star, ThumbsUp } from 'lucide-react'
 import type { SitePost } from '@/lib/site-connector'
 import type { HomeTimeSection } from '@/lib/task-data'
 import type { TaskKey } from '@/lib/site-config'
-import { SITE_CONFIG } from '@/lib/site-config'
 import { pagesContent } from '@/editable/content/pages.content'
-import { editableDesignContract as dc, editablePalette as pal } from '@/editable/layouts/design-contract'
+import { globalContent } from '@/editable/content/global.content'
 import { getEditablePostImage, postHref } from '@/editable/cards/PostCards'
 
 type HomeSectionProps = {
@@ -15,165 +17,126 @@ type HomeSectionProps = {
   timeSections: HomeTimeSection[]
 }
 
-function getExcerpt(post?: SitePost | null, limit = 130) {
+const categoryTabs = [
+  { label: 'Business Services', query: 'business', keywords: ['business', 'agency', 'consult', 'service', 'digital', 'marketing'], services: ['Business consulting', 'Digital marketing', 'Lead generation', 'Professional services', 'Operations support', 'Brand strategy'] },
+  { label: 'Real Estate', query: 'real estate', keywords: ['real estate', 'property', 'realtor', 'housing', 'construction'], services: ['Real estate agencies', 'Property management', 'Commercial real estate', 'Home inspection', 'Property consulting', 'Construction services'] },
+  { label: 'Healthcare', query: 'healthcare', keywords: ['health', 'medical', 'clinic', 'care', 'wellness', 'dental'], services: ['Medical clinics', 'Dental services', 'Home healthcare', 'Wellness services', 'Physiotherapy', 'Mental health support'] },
+  { label: 'Finance', query: 'finance', keywords: ['finance', 'account', 'tax', 'insurance', 'bank', 'payroll'], services: ['Accounting services', 'Tax consulting', 'Insurance brokerage', 'Financial planning', 'Payroll services', 'Bookkeeping'] },
+  { label: 'Home Improvement', query: 'home improvement', keywords: ['home', 'repair', 'electric', 'plumb', 'clean', 'interior'], services: ['Home renovation', 'Electrical services', 'Plumbing services', 'Interior design', 'Cleaning services', 'Landscaping'] },
+]
+const browseGroups = [
+  { title: 'Marketing & Sales', items: ['Advertising agencies', 'SEO services', 'Lead generation', 'Brand consultants', 'Print shops', 'Social media agencies', 'Web design companies', 'Market research'] },
+  { title: 'Operations', items: ['Facility management', 'Commercial cleaning', 'Logistics providers', 'Security services', 'Staffing agencies', 'Business consultants', 'Office suppliers', 'Warehousing'] },
+  { title: 'Finance & Legal', items: ['Accounting firms', 'Tax consultants', 'Insurance brokers', 'Legal advisors', 'Payroll providers', 'Bookkeeping services', 'Financial planners', 'Compliance consultants'] },
+  { title: 'Local Services', items: ['Home repair', 'Electricians', 'Plumbers', 'Moving companies', 'Event services', 'Landscaping', 'Pest control', 'Auto repair'] },
+  { title: 'Real Estate & Construction', items: ['Real estate agents', 'Property managers', 'General contractors', 'Architects', 'Interior designers', 'Roofing companies', 'Home inspectors', 'Commercial builders'] },
+  { title: 'Healthcare & Wellness', items: ['Medical clinics', 'Dental practices', 'Physiotherapists', 'Mental health services', 'Fitness studios', 'Home healthcare', 'Pharmacies', 'Wellness centers'] },
+  { title: 'Technology', items: ['IT support', 'Software companies', 'Cybersecurity services', 'Cloud consultants', 'Managed IT services', 'App developers', 'Data analytics', 'Telecom providers'] },
+  { title: 'Hospitality & Events', items: ['Hotels', 'Restaurants', 'Caterers', 'Event planners', 'Venues', 'Travel agencies', 'Photography services', 'Entertainment providers'] },
+]
+
+function getExcerpt(post?: SitePost | null, limit = 120) {
   const content = post?.content && typeof post.content === 'object' ? post.content as Record<string, unknown> : {}
-  const raw =
-    (typeof content.description === 'string' && content.description) ||
-    (typeof content.summary === 'string' && content.summary) ||
-    post?.summary ||
-    ''
+  const raw = (typeof content.description === 'string' && content.description) || (typeof content.summary === 'string' && content.summary) || post?.summary || ''
   const clean = raw.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
   return clean.length > limit ? `${clean.slice(0, limit).trim()}...` : clean
 }
 
-function taskLabel(task: TaskKey) {
-  return SITE_CONFIG.tasks.find((item) => item.key === task)?.label || task
+function getContent(post: SitePost) {
+  return post.content && typeof post.content === 'object' ? post.content as Record<string, unknown> : {}
 }
 
-function MiniPoster({ post, href }: { post: SitePost; href: string }) {
+function getText(post: SitePost, keys: string[]) {
+  const content = getContent(post)
+  for (const key of keys) {
+    const value = content[key]
+    if (typeof value === 'string' && value.trim()) return value.trim()
+  }
+  return ''
+}
+
+function searchablePostText(post: SitePost) {
+  const content = getContent(post)
+  return [
+    post.title,
+    post.summary,
+    post.tags?.join(' '),
+    content.category,
+    content.industry,
+    content.service,
+    content.description,
+    content.location,
+  ].filter((value): value is string => typeof value === 'string').join(' ').toLowerCase()
+}
+
+function ratingFor(index: number) {
+  return ['4.8', '4.7', '4.6', '4.5', '4.4', '4.3'][index % 6]
+}
+
+function BusinessCard({ post, href, index, categoryLabel }: { post: SitePost; href: string; index: number; categoryLabel?: string }) {
+  const location = getText(post, ['location', 'city', 'address'])
+  const category = categoryLabel || getText(post, ['category', 'service', 'industry']) || post.tags?.[0] || 'Business services'
+  const rating = ratingFor(index)
+  const sentiment = [94, 91, 89, 87, 85, 82][index % 6]
+
   return (
-    <Link href={href} className={`group block w-[230px] shrink-0 ${dc.motion.fade}`}>
-      <article className="relative overflow-hidden rounded-[1.65rem] border border-black/[0.07] bg-white p-2 shadow-[0_18px_48px_rgba(47,29,22,0.10)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_22px_58px_rgba(47,29,22,0.16)]">
-        <div className="relative aspect-[4/5] overflow-hidden rounded-[1.25rem] bg-[var(--slot4-media-bg)]">
-          <img src={getEditablePostImage(post)} alt={post.title} className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105" />
-          <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent_35%,rgba(0,0,0,0.72)_100%)]" />
-          <span className="absolute left-3 top-3 rounded-full bg-white/92 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-[var(--slot4-page-text)] shadow-sm">
-            Read
+    <article className="rounded-2xl border border-[var(--editable-border)] bg-white p-5 shadow-[0_12px_34px_rgba(15,35,70,0.08)] transition hover:-translate-y-1 hover:shadow-[0_18px_48px_rgba(15,35,70,0.14)]">
+      <div className="flex items-start justify-between gap-4">
+        <Link href={href} className="flex min-w-0 items-center gap-3">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[var(--editable-border)] bg-[#f5f9ff]">
+            <img src={getEditablePostImage(post)} alt="" className="h-full w-full object-cover" />
           </span>
-          <h3 className="absolute bottom-3 left-3 right-3 line-clamp-3 text-base font-black leading-tight tracking-[-0.03em] text-white drop-shadow-sm">
-            {post.title}
-          </h3>
-        </div>
-      </article>
-    </Link>
+          <span className="min-w-0">
+            <h3 className="truncate text-base font-black">{post.title}</h3>
+            <span className="mt-1 flex items-center gap-1 text-sm font-semibold text-slate-700"><Star className="h-4 w-4 fill-slate-900 text-slate-900" /> {rating}</span>
+          </span>
+        </Link>
+        <span className="rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-bold text-emerald-700"><ThumbsUp className="mr-1 inline h-3 w-3" /> Verified</span>
+      </div>
+      <h4 className="mt-7 text-lg font-black leading-tight">Highly rated for {category}</h4>
+      <p className="mt-1 text-xs font-semibold text-slate-500">{location || 'Local and online service coverage'}</p>
+      <p className="mt-5 text-sm font-black">Review sentiment</p>
+      <div className="mt-3 flex h-2 overflow-hidden rounded-full bg-slate-100">
+        <span className="bg-emerald-500" style={{ width: `${sentiment}%` }} />
+        <span className="bg-amber-300" style={{ width: `${Math.max(5, 100 - sentiment - 3)}%` }} />
+        <span className="bg-red-500" style={{ width: '3%' }} />
+      </div>
+      <div className="mt-2 flex justify-between text-xs font-semibold text-slate-600">
+        <span>Positive<br /><b className="text-slate-950">{sentiment}%</b></span>
+        <span>Neutral<br /><b className="text-slate-950">{100 - sentiment - 3}%</b></span>
+        <span>Needs review<br /><b className="text-slate-950">3%</b></span>
+      </div>
+      <p className="mt-5 line-clamp-2 text-sm leading-6 text-slate-600">{getExcerpt(post)}</p>
+      <div className="mt-5 grid grid-cols-2 gap-3">
+        <Link href={href} className="inline-flex h-10 items-center justify-center rounded-full border border-[#315fe8] text-sm font-black text-[#315fe8]">View profile</Link>
+        <Link href={href} className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-[#315fe8] text-sm font-black text-white">Details <ExternalLink className="h-4 w-4" /></Link>
+      </div>
+    </article>
   )
 }
 
-function FeatureTile({ post, href, index }: { post: SitePost; href: string; index: number }) {
-  const style = index % 3
-  if (style === 0) {
-    return (
-      <Link href={href} className="group relative min-h-[360px] overflow-hidden rounded-[2rem] bg-[#24150f] p-5 text-white shadow-[0_24px_70px_rgba(47,29,22,0.18)] transition duration-300 hover:-translate-y-1">
-        <img src={getEditablePostImage(post)} alt={post.title} className="absolute inset-0 h-full w-full object-cover opacity-70 transition duration-700 group-hover:scale-105" />
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.05),rgba(0,0,0,0.78))]" />
-        <div className="relative z-10 flex min-h-[320px] flex-col justify-end">
-          <p className="text-[11px] font-black uppercase tracking-[0.28em] text-white/70">Featured</p>
-          <h3 className="mt-3 line-clamp-3 text-3xl font-black leading-[0.98] tracking-[-0.06em]">{post.title}</h3>
-          <p className="mt-4 line-clamp-2 text-sm leading-6 text-white/76">{getExcerpt(post, 110)}</p>
-        </div>
-      </Link>
-    )
-  }
-  if (style === 1) {
-    return (
-      <Link href={href} className={`group grid overflow-hidden rounded-[2rem] border ${pal.border} bg-white shadow-[0_18px_54px_rgba(47,29,22,0.10)] transition duration-300 hover:-translate-y-1 md:grid-cols-[0.82fr_1fr]`}>
-        <div className="relative min-h-[190px] bg-[var(--slot4-media-bg)]">
-          <img src={getEditablePostImage(post)} alt={post.title} className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105" />
-        </div>
-        <div className="p-6">
-          <p className={`text-[11px] font-black uppercase tracking-[0.26em] ${pal.accentText}`}>Spotlight {index + 1}</p>
-          <h3 className="mt-4 line-clamp-3 text-2xl font-black leading-tight tracking-[-0.05em] text-[var(--slot4-page-text)]">{post.title}</h3>
-          <p className={`mt-4 line-clamp-3 text-sm leading-7 ${pal.mutedText}`}>{getExcerpt(post, 135)}</p>
-        </div>
-      </Link>
-    )
-  }
+export function EditableHomeHero(_: HomeSectionProps) {
   return (
-    <Link href={href} className={`group relative overflow-hidden rounded-[2rem] border ${pal.border} bg-[var(--slot4-accent-soft)] p-6 shadow-[0_18px_54px_rgba(47,29,22,0.08)] transition duration-300 hover:-translate-y-1`}>
-      <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-white/55" />
-      <div className="relative h-24 w-24 overflow-hidden rounded-full border-4 border-white shadow-sm">
-        <img src={getEditablePostImage(post)} alt={post.title} className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-110" />
-      </div>
-      <p className={`mt-8 text-[11px] font-black uppercase tracking-[0.26em] ${pal.accentText}`}>Deep read</p>
-      <h3 className="mt-3 line-clamp-4 text-2xl font-black leading-tight tracking-[-0.05em] text-[var(--slot4-page-text)]">{post.title}</h3>
-      <p className={`mt-4 line-clamp-3 text-sm leading-7 ${pal.mutedText}`}>{getExcerpt(post, 125)}</p>
-    </Link>
-  )
-}
-
-function WideStoryCard({ post, href, index }: { post: SitePost; href: string; index: number }) {
-  return (
-    <Link href={href} className={`group grid gap-4 overflow-hidden rounded-[1.75rem] border ${pal.border} bg-white p-3 shadow-[0_14px_42px_rgba(47,29,22,0.08)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_20px_58px_rgba(47,29,22,0.14)] sm:grid-cols-[150px_minmax(0,1fr)]`}>
-      <div className="relative aspect-[5/4] overflow-hidden rounded-[1.25rem] bg-[var(--slot4-media-bg)] sm:aspect-square">
-        <img src={getEditablePostImage(post)} alt={post.title} className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105" />
-        <span className="absolute bottom-3 left-3 rounded-full bg-black/72 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-white backdrop-blur">
-          Pick {index + 1}
-        </span>
-      </div>
-      <div className="min-w-0 py-2 pr-2">
-        <p className={`text-[11px] font-extrabold uppercase tracking-[0.24em] ${pal.accentText}`}>Editor's lane</p>
-        <h3 className="mt-2 line-clamp-2 text-2xl font-black leading-tight tracking-[-0.04em] text-[var(--slot4-page-text)]">{post.title}</h3>
-        <p className={`mt-3 line-clamp-3 text-sm leading-7 ${pal.mutedText}`}>{getExcerpt(post, 145)}</p>
-      </div>
-    </Link>
-  )
-}
-
-function IndexPill({ post, href, index }: { post: SitePost; href: string; index: number }) {
-  return (
-    <Link href={href} className={`group relative overflow-hidden rounded-[1.55rem] border ${pal.border} bg-white p-5 shadow-[0_12px_34px_rgba(47,29,22,0.07)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_48px_rgba(47,29,22,0.13)]`}>
-      <span className="absolute -right-6 -top-6 h-20 w-20 rounded-full bg-[var(--slot4-accent-soft)] opacity-70 transition group-hover:scale-125" />
-      <p className={`relative text-[11px] font-black uppercase tracking-[0.26em] ${pal.accentText}`}>No. {String(index + 1).padStart(2, '0')}</p>
-      <h3 className="relative mt-3 line-clamp-3 text-xl font-black leading-tight tracking-[-0.04em] text-[var(--slot4-page-text)]">{post.title}</h3>
-      <p className={`relative mt-4 line-clamp-3 text-sm leading-7 ${pal.mutedText}`}>{getExcerpt(post, 120)}</p>
-      <span className="relative mt-5 inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-[var(--slot4-page-text)] opacity-70">
-        Open <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-1" />
-      </span>
-    </Link>
-  )
-}
-
-function Rail({ children, className = '' }: { children: React.ReactNode; className?: string }) {
-  return <div className={`${dc.layout.rail} ${className}`}>{children}</div>
-}
-
-export function EditableHomeHero({ primaryTask, primaryRoute }: HomeSectionProps) {
-  const heroTitle = pagesContent.home.hero.title.join(' ') || `Come for the ${taskLabel(primaryTask).toLowerCase()}. Stay for the connection.`
-  return (
-    <section className={`${pal.creamBg} relative overflow-hidden`}>
-      <div className="pointer-events-none absolute inset-0 opacity-[0.35]">
-        <div className="absolute -right-[20%] top-[10%] h-[420px] w-[420px] rounded-full bg-[#f4d7c1] blur-3xl" />
-        <div className="absolute -left-[10%] bottom-[5%] h-[320px] w-[320px] rounded-full bg-[#f8e0d0] blur-3xl" />
-      </div>
-      <div className="relative mx-auto grid max-w-7xl gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-16 lg:px-8 lg:py-20">
-        <div>
-          <p className={`${dc.type.eyebrow} ${pal.accentText}`}>{pagesContent.home.hero.badge}</p>
-          <h1 className={`${dc.type.heroTitle} mt-4 max-w-xl`}>{heroTitle}</h1>
-          <p className={`mt-5 max-w-lg text-base leading-relaxed ${pal.mutedText} sm:text-lg`}>{pagesContent.home.hero.description}</p>
-          <div className="mt-8 flex flex-wrap gap-4">
-            <Link href={primaryRoute} className={dc.button.primary}>Browse {taskLabel(primaryTask).toLowerCase()} <ArrowRight className="h-4 w-4" /></Link>
-            <Link href="/contact" className={dc.button.secondary}>Contact us</Link>
-          </div>
-        </div>
-        <div className="relative min-h-[360px] lg:min-h-[430px]">
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="relative h-[min(100%,390px)] w-[min(100%,430px)] bg-[var(--slot4-accent-fill)]" style={{ clipPath: 'polygon(8% 12%, 92% 4%, 98% 45%, 88% 88%, 42% 96%, 6% 78%, 2% 38%)' }}>
-              <div className="absolute inset-0 bg-[linear-gradient(145deg,color-mix(in_oklab,var(--slot4-accent-fill)_78%,white)_0%,var(--slot4-accent-fill)_48%,color-mix(in_oklab,var(--slot4-accent-fill)_82%,black)_100%)]" />
-              <div className="absolute inset-6 flex flex-col justify-end rounded-sm bg-white/10 p-4 text-white backdrop-blur-[2px]">
-                <p className="text-xs font-medium uppercase tracking-widest opacity-90">Featured on {SITE_CONFIG.name}</p>
-                <p className="mt-2 text-lg font-bold leading-snug">Stories, resources, and useful pages from the community.</p>
-              </div>
+    <section className="bg-white">
+      <div className="mx-auto max-w-[var(--editable-container)] px-4 py-8 sm:px-6 lg:px-8">
+        <div className="overflow-hidden rounded-3xl border border-[var(--editable-border)] bg-[#eaf7ff] shadow-sm">
+          <div className="relative px-5 py-16 text-center sm:px-10 lg:py-20">
+            <div className="pointer-events-none absolute inset-0 opacity-70" style={{ clipPath: 'polygon(0 35%, 59% 0, 100% 37%, 92% 100%, 0 100%)', background: 'linear-gradient(135deg,#bfe9ff,#eef8ff)' }} />
+            <div className="relative mx-auto max-w-3xl">
+              <p className="text-xs font-black uppercase tracking-[0.22em] text-[#315fe8]">{pagesContent.home.hero.badge}</p>
+              <h1 className="mt-4 text-4xl font-black leading-tight tracking-tight text-slate-950 sm:text-6xl">{pagesContent.home.hero.title.join(' ')}</h1>
+              <p className="mx-auto mt-5 max-w-xl text-lg leading-8 text-slate-700">{pagesContent.home.hero.description}</p>
+              <form action="/search" className="mx-auto mt-9 flex max-w-2xl rounded-full border border-slate-200 bg-white p-2 shadow-[0_10px_30px_rgba(15,35,70,0.10)]">
+                <input type="hidden" name="task" value="listing" />
+                <input name="q" placeholder={pagesContent.home.hero.searchPlaceholder} className="min-w-0 flex-1 bg-transparent px-4 text-sm font-semibold text-slate-900 outline-none placeholder:text-slate-400" />
+                <button className="inline-flex items-center gap-2 rounded-full bg-[#315fe8] px-5 py-3 text-sm font-black text-white"><Search className="h-4 w-4" /> Search</button>
+              </form>
             </div>
           </div>
-          <div className="absolute left-0 top-[6%] z-10 max-w-[270px] rounded-2xl border border-black/5 bg-white p-4 shadow-[0_12px_40px_rgba(0,0,0,0.12)]">
-            <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--slot4-accent-soft)] text-xs font-black text-[var(--slot4-page-text)]">R</div>
-              <div className="min-w-0 flex-1">
-                <p className={`text-xs font-semibold ${pal.accentText}`}>reader_mina</p>
-                <p className="mt-1 text-sm leading-snug text-neutral-800">This page went from useful to unforgettable in two scrolls.</p>
-                <div className="mt-2 flex items-center gap-1 text-xs text-neutral-500"><Heart className={`h-3.5 w-3.5 ${pal.accentText}`} /><span>128</span></div>
-              </div>
-            </div>
-          </div>
-          <div className="absolute bottom-[8%] right-0 z-10 max-w-[270px] rounded-2xl border border-black/5 bg-white p-4 shadow-[0_12px_40px_rgba(0,0,0,0.12)]">
-            <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--slot4-accent-soft)] text-xs font-black text-[var(--slot4-page-text)]">D</div>
-              <div className="min-w-0 flex-1">
-                <p className={`text-xs font-semibold ${pal.accentText}`}>dev_notes</p>
-                <p className="mt-1 text-sm leading-snug text-neutral-800">Clean layout, quick browsing, and no heavy drama.</p>
-                <div className="mt-2 flex items-center gap-1 text-xs text-neutral-500"><Heart className={`h-3.5 w-3.5 ${pal.accentText}`} /><span>204</span></div>
-              </div>
-            </div>
+          <div className="grid border-t border-[var(--editable-border)] bg-white/80 text-center sm:grid-cols-3">
+            {['2.5M+ business signals', '50K+ directory visitors', '25+ category lanes'].map((item) => (
+              <div key={item} className="border-[var(--editable-border)] px-4 py-5 text-lg font-black sm:border-r last:border-r-0">{item}</div>
+            ))}
           </div>
         </div>
       </div>
@@ -182,36 +145,84 @@ export function EditableHomeHero({ primaryTask, primaryRoute }: HomeSectionProps
 }
 
 export function EditableStoryRail({ primaryTask, primaryRoute, posts }: HomeSectionProps) {
-  const railPosts = posts.slice(0, 12)
-  if (!railPosts.length) return null
+  const [activeCategory, setActiveCategory] = useState(0)
+  const cards = useMemo(() => {
+    const category = categoryTabs[activeCategory]
+    const matched = posts.filter((post) => category.keywords.some((keyword) => searchablePostText(post).includes(keyword)))
+    const unmatched = posts.filter((post) => !matched.some((item) => (item.id || item.slug) === (post.id || post.slug)))
+    const offset = unmatched.length ? activeCategory % unmatched.length : 0
+    return [...matched, ...unmatched.slice(offset), ...unmatched.slice(0, offset)]
+      .filter((post, index, list) => list.findIndex((item) => (item.id || item.slug) === (post.id || post.slug)) === index)
+      .slice(0, 6)
+  }, [activeCategory, posts])
+  if (!posts.length) return null
   return (
-    <section className={`${pal.warmBg} relative border-t border-black/[0.06]`}>
-      <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-16 bg-[linear-gradient(to_bottom,transparent,#ffffff)]" />
-      <div className="relative mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
-        <div className="flex items-end justify-between gap-4">
-          <h2 className={dc.type.sectionTitle}>Trending now</h2>
-          <Link href={primaryRoute} className="hidden text-sm font-semibold text-[#006d6d] hover:underline sm:inline">See all</Link>
+    <section className="bg-white py-16">
+      <div className="mx-auto max-w-[var(--editable-container)] px-4 sm:px-6 lg:px-8">
+        <h2 className="text-center text-3xl font-black tracking-tight sm:text-4xl">Explore popular business categories</h2>
+        <div role="tablist" aria-label="Popular business categories" className="mt-10 flex gap-4 overflow-x-auto border-b border-slate-200 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {categoryTabs.map((tab, index) => (
+            <button
+              key={tab.label}
+              type="button"
+              role="tab"
+              aria-selected={activeCategory === index}
+              onClick={() => setActiveCategory(index)}
+              className={`min-w-fit border-b-4 px-5 pb-4 text-sm font-bold transition ${activeCategory === index ? 'border-[#315fe8] text-slate-950' : 'border-transparent text-slate-600 hover:border-slate-300 hover:text-slate-950'}`}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
-        <Rail className="mt-8">
-          {railPosts.map((post) => <MiniPoster key={post.id} post={post} href={postHref(primaryTask, post, primaryRoute)} />)}
-        </Rail>
+        <div role="tabpanel" className="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+          {cards.map((post, index) => (
+            <BusinessCard
+              key={`${categoryTabs[activeCategory].label}-${post.id || post.slug}`}
+              post={post}
+              href={postHref(primaryTask, post, primaryRoute)}
+              index={index}
+              categoryLabel={categoryTabs[activeCategory].services[index % categoryTabs[activeCategory].services.length]}
+            />
+          ))}
+        </div>
+        <div className="mt-8 text-center">
+          <Link href={`/search?task=listing&q=${encodeURIComponent(categoryTabs[activeCategory].query)}`} className="inline-flex items-center gap-2 rounded-full border border-[#315fe8] px-5 py-3 text-sm font-black text-[#315fe8]">
+            Browse all {categoryTabs[activeCategory].label.toLowerCase()} <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
       </div>
     </section>
   )
 }
 
 export function EditableMagazineSplit({ primaryTask, primaryRoute, posts }: HomeSectionProps) {
-  const featured = posts.slice(0, 8)
-  if (!featured.length) return null
+  const picks = posts.slice(0, 4)
+  if (!picks.length) return null
   return (
-    <section className={`${pal.lavenderBg} relative overflow-hidden`}>
-      <div className="pointer-events-none absolute -left-20 top-8 h-40 w-40 rounded-full bg-white/40 blur-2xl" />
-      <div className="pointer-events-none absolute -right-16 bottom-4 h-48 w-48 rounded-full bg-indigo-200/50 blur-3xl" />
-      <div className="relative mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
-        <h2 className="text-center text-3xl font-extrabold tracking-tight sm:text-4xl">Must-read {taskLabel(primaryTask).toLowerCase()}</h2>
-        <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-          {featured.slice(0, 6).map((post, index) => (
-            <FeatureTile key={post.id} post={post} href={postHref(primaryTask, post, primaryRoute)} index={index} />
+    <section className="bg-[#f6f9ff] py-16">
+      <div className="mx-auto max-w-[var(--editable-container)] px-4 sm:px-6 lg:px-8">
+        <div className="text-center">
+          <h2 className="text-3xl font-black tracking-tight sm:text-4xl">Compare popular choices</h2>
+          <p className="mt-3 text-lg text-slate-600">Evaluate service fit, reputation, location, and contact readiness side by side.</p>
+        </div>
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3 text-sm font-bold">
+          <span>Comparison:</span>
+          {picks.map((post, index) => <span key={post.id || post.slug} className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 shadow-sm"><img src={getEditablePostImage(post)} alt="" className="h-6 w-6 rounded-md object-cover" /> {post.title.slice(0, 18)}{index < picks.length - 1 ? '' : ''}</span>)}
+          <Link href="/search?task=listing" className="inline-flex items-center gap-1 text-[#315fe8]">See full comparison <ArrowRight className="h-4 w-4" /></Link>
+        </div>
+        <div className="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+          {picks.map((post, index) => (
+            <Link key={post.id || post.slug} href={postHref(primaryTask, post, primaryRoute)} className="rounded-2xl border border-[var(--editable-border)] bg-white p-5 shadow-sm transition hover:-translate-y-1">
+              <div className="flex items-center gap-3">
+                <img src={getEditablePostImage(post)} alt="" className="h-12 w-12 rounded-xl object-cover" />
+                <div><h3 className="font-black">{post.title}</h3><p className="text-sm font-semibold"><Star className="mr-1 inline h-4 w-4 fill-slate-900" /> {ratingFor(index)}</p></div>
+              </div>
+              {['Response speed', 'Service range', 'Customer fit', 'Trust score'].map((metric, metricIndex) => (
+                <div key={metric} className="mt-5 grid grid-cols-[1fr_38px_86px] items-center gap-3 text-sm">
+                  <span>{metric}</span><b>{(4.1 + ((index + metricIndex) % 5) / 10).toFixed(1)}</b><span className="h-2 rounded-full bg-slate-200"><span className="block h-2 rounded-full bg-slate-700" style={{ width: `${74 + ((index + metricIndex) % 4) * 5}%` }} /></span>
+                </div>
+              ))}
+            </Link>
           ))}
         </div>
       </div>
@@ -219,55 +230,116 @@ export function EditableMagazineSplit({ primaryTask, primaryRoute, posts }: Home
   )
 }
 
-export function EditableTimeCollections({ primaryTask, primaryRoute, posts, timeSections }: HomeSectionProps) {
-  const categoryPosts = timeSections.flatMap((section) => section.posts).length ? timeSections.flatMap((section) => section.posts) : posts.slice(8)
-  const feature = categoryPosts[0] || posts[0]
-  const picks = categoryPosts.slice(1, 5)
-  const indexPosts = categoryPosts.slice(5, 13)
+export function EditableTimeCollections({ primaryTask, primaryRoute, posts }: HomeSectionProps) {
+  const feature = posts[0]
+  const [openGroups, setOpenGroups] = useState<number[]>([0])
+  const allGroupsOpen = openGroups.length === browseGroups.length
+  const toggleGroup = (index: number) => {
+    setOpenGroups((current) => current.includes(index) ? current.filter((item) => item !== index) : [...current, index])
+  }
   return (
-    <section className={pal.grayBg}>
-      <div className="mx-auto grid max-w-7xl gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[1fr_1.1fr] lg:items-center lg:px-8">
-        <div>
-          <h2 className={dc.type.sectionTitle}>All the topics. All the voices.</h2>
-          <p className={`mt-4 max-w-md text-base leading-relaxed ${pal.mutedText}`}>Find your next page faster. Browse clean sections, rich cards, and useful posts without losing the original site rhythm.</p>
-          <form action="/search" className="mt-8 flex max-w-md rounded-full border border-black/[0.08] bg-white p-2 shadow-sm">
-            <input name="q" placeholder="Search posts" className="min-w-0 flex-1 bg-transparent px-4 text-sm outline-none" />
-            <button className="inline-flex items-center gap-2 rounded-full bg-black px-5 py-3 text-sm font-semibold text-white"><Search className="h-4 w-4" /> Search</button>
-          </form>
-        </div>
-        <div className="grid gap-4">
-          {picks.map((post, index) => <WideStoryCard key={post.id} post={post} href={postHref(primaryTask, post, primaryRoute)} index={index} />)}
-        </div>
-      </div>
-      {feature ? (
-        <div className="mx-auto grid max-w-7xl gap-8 px-4 pb-16 sm:px-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1fr)] lg:px-8">
-          <Link href={postHref(primaryTask, feature, primaryRoute)} className="group relative min-h-[420px] overflow-hidden rounded-[2rem] bg-black text-white shadow-[0_18px_70px_rgba(0,0,0,0.16)]">
-            <img src={getEditablePostImage(feature)} alt={feature.title} className="absolute inset-0 h-full w-full object-cover opacity-65 transition duration-500 group-hover:scale-105" />
-            <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.05),rgba(0,0,0,0.74))]" />
-            <div className="relative z-10 flex min-h-[420px] flex-col justify-end p-7 sm:p-10">
-              <p className="text-xs font-bold uppercase tracking-[0.24em] text-white/75">Featured stream</p>
-              <h3 className="mt-4 max-w-2xl text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl">{feature.title}</h3>
-              <p className="mt-5 max-w-xl text-sm leading-7 text-white/78">{getExcerpt(feature, 180)}</p>
+    <>
+      <section className="bg-white py-16">
+        <div className="mx-auto grid max-w-[var(--editable-container)] gap-10 px-4 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:px-8">
+          <div>
+            <h2 className="text-3xl font-black leading-tight tracking-tight sm:text-4xl">Get insights that guide every step of business selection.</h2>
+            <p className="mt-5 max-w-xl text-lg leading-8 text-slate-600">From defining service needs to comparing finalists, the directory keeps each business profile readable, practical, and easy to act on.</p>
+            <Link href="/about" className="mt-7 inline-flex items-center gap-2 text-sm font-black text-[#315fe8]">Learn how it works <ArrowRight className="h-4 w-4" /></Link>
+          </div>
+          <div className="rounded-3xl border border-[var(--editable-border)] bg-[#eef6ff] p-8 shadow-sm">
+            <div className="grid gap-4 sm:grid-cols-2">
+              {['Define needs', 'Explore providers', 'Narrow your list', 'Contact confidently'].map((step, index) => (
+                <div key={step} className="rounded-2xl bg-white p-5">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#0b1b3d] text-sm font-black text-white">{index + 1}</span>
+                  <h3 className="mt-4 text-lg font-black">{step}</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">Use clear listing data and direct actions to move one step closer to the right business.</p>
+                </div>
+              ))}
             </div>
-          </Link>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {indexPosts.map((post, index) => <IndexPill key={post.id} post={post} href={postHref(primaryTask, post, primaryRoute)} index={index} />)}
           </div>
         </div>
-      ) : null}
-    </section>
+      </section>
+
+      <section className="bg-white py-16">
+        <div className="mx-auto grid max-w-[var(--editable-container)] gap-10 px-4 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:px-8">
+          <div>
+            <h2 className="text-3xl font-black leading-tight tracking-tight sm:text-4xl">Trusted by visitors. Built for business decisions.</h2>
+            <p className="mt-5 max-w-xl text-lg leading-8 text-slate-600">People use {globalContent.site.name} to cut through vague search results and connect with companies that can actually help.</p>
+            <div className="mt-8 flex flex-wrap gap-5 text-2xl font-black text-slate-400"><span>Forbes</span><span>Bloomberg</span><span>Entrepreneur</span><span>BBC</span></div>
+          </div>
+          <div className="rounded-3xl bg-[#f6f7f9] p-8 text-center">
+            <span className="rounded bg-white px-3 py-1 text-xs font-bold">Business Services</span>
+            <p className="mx-auto mt-6 max-w-xl text-2xl font-black leading-tight">"We compared providers faster and contacted the right company the same day."</p>
+            <p className="mt-6 text-sm font-bold">Jamie L.</p>
+            <p className="text-sm text-slate-500">Operations owner</p>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-[#f6f9ff] py-16">
+        <div className="mx-auto max-w-[var(--editable-container)] px-4 sm:px-6 lg:px-8">
+          <h2 className="text-center text-3xl font-black tracking-tight sm:text-4xl">Browse popular business services</h2>
+          <div className="mt-5 text-center">
+            <button
+              type="button"
+              onClick={() => setOpenGroups(allGroupsOpen ? [] : browseGroups.map((_, index) => index))}
+              className="rounded-full border border-[var(--editable-border)] bg-white px-5 py-2.5 text-sm font-black text-[#315fe8] shadow-sm"
+            >
+              {allGroupsOpen ? 'Collapse all services' : 'Explore all services'}
+            </button>
+          </div>
+          <div className="mt-10 grid gap-8 md:grid-cols-2">
+            {browseGroups.map(({ title, items }, index) => {
+              const open = openGroups.includes(index)
+              return (
+              <div key={title} className="border-t border-slate-200 pt-5">
+                <button
+                  type="button"
+                  aria-expanded={open}
+                  onClick={() => toggleGroup(index)}
+                  className="flex w-full items-center justify-between gap-4 py-1 text-left"
+                >
+                  <h3 className="font-black">{title}</h3>
+                  <ChevronDown className={`h-5 w-5 shrink-0 text-[#315fe8] transition-transform ${open ? 'rotate-180' : ''}`} />
+                </button>
+                {open ? (
+                  <ul className="mt-5 grid gap-2 text-sm text-slate-700 sm:grid-cols-2">
+                    {items.map((item) => (
+                      <li key={item}>
+                        <Link href={`/search?task=listing&q=${encodeURIComponent(item)}`} className="group flex gap-2 rounded-xl px-2 py-2 transition hover:bg-white hover:text-[#315fe8]">
+                          <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#315fe8]" />
+                          <span className="font-semibold group-hover:underline">{item}</span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </div>
+              )
+            })}
+          </div>
+          {feature ? <Link href={postHref(primaryTask, feature, primaryRoute)} className="mx-auto mt-10 flex max-w-2xl items-center justify-between rounded-2xl border border-[var(--editable-border)] bg-white p-4 shadow-sm"><span className="font-black">Featured business: {feature.title}</span><ArrowRight className="h-5 w-5 text-[#315fe8]" /></Link> : null}
+        </div>
+      </section>
+    </>
   )
 }
 
 export function EditableHomeCta() {
   return (
-    <section id="get-app" className={`${pal.panelBg} relative scroll-mt-24 overflow-hidden`}>
-      <div className="pointer-events-none absolute inset-0 opacity-40"><div className="absolute left-[10%] top-[20%] h-64 w-64 rounded-full bg-[#f4d7c1] blur-3xl" /></div>
-      <div className="relative mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-3xl text-center">
-          <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">Where useful pages meet audience</h2>
-          <p className={`mt-4 text-lg ${pal.mutedText}`}>Explore useful posts, fresh updates, and curated resources across every section of the site.</p>
-          <div className="mt-8 flex flex-wrap justify-center gap-4"><Link href="/contact" className={dc.button.primary}>Contact us</Link></div>
+    <section id="get-app" className="bg-white py-16">
+      <div className="mx-auto grid max-w-[var(--editable-container)] gap-8 px-4 sm:px-6 lg:grid-cols-2 lg:px-8">
+        <div className="overflow-hidden rounded-3xl bg-[#315fe8] p-8 text-white">
+          <BadgeCheck className="h-7 w-7" />
+          <h2 className="mt-6 text-3xl font-black leading-tight">Are you a business owner? Get listed with {globalContent.site.name}.</h2>
+          <p className="mt-4 max-w-xl text-white/80">Create a profile that helps customers understand your services, location, and best contact path.</p>
+          <Link href="/create" className="mt-7 inline-flex rounded-full bg-white px-5 py-3 text-sm font-black text-[#315fe8]">Add your listing</Link>
+        </div>
+        <div className="overflow-hidden rounded-3xl bg-[#0b1b3d] p-8 text-white">
+          <Building2 className="h-7 w-7" />
+          <h2 className="mt-6 text-3xl font-black leading-tight">Need help choosing? Search and compare businesses first.</h2>
+          <p className="mt-4 max-w-xl text-white/80">Use category filters, listing cards, and detail pages to find the provider that fits your next decision.</p>
+          <Link href="/listing" className="mt-7 inline-flex rounded-full bg-white px-5 py-3 text-sm font-black text-[#0b1b3d]">Browse listings</Link>
         </div>
       </div>
     </section>

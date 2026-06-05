@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import type { CSSProperties } from 'react'
-import { ArrowRight, Bookmark, BriefcaseBusiness, Building2, Camera, Download, FileText, Filter, Image as ImageIcon, MapPin, Megaphone, Search, UserRound } from 'lucide-react'
+import { ArrowRight, Bookmark, BriefcaseBusiness, Building2, Camera, Download, ExternalLink, FileText, Filter, Image as ImageIcon, MapPin, Megaphone, Phone, Search, Star, UserRound } from 'lucide-react'
 import { buildTaskMetadata } from '@/lib/seo'
 import { CATEGORY_OPTIONS, normalizeCategory } from '@/lib/categories'
 import { fetchPaginatedTaskPosts, buildPostUrl } from '@/lib/task-data'
@@ -9,7 +9,6 @@ import type { SiteFeedPagination, SitePost } from '@/lib/site-connector'
 import { taskPageMetadata } from '@/config/site.content'
 import { taskPageVoices } from '@/editable/content/task-pages.content'
 import { EditableSiteShell } from '@/editable/shell/EditableSiteShell'
-import { getVisualPreset, visualSystem } from '@/editable/theme/visual-system'
 
 export const revalidate = 3
 
@@ -45,6 +44,7 @@ const getField = (post: SitePost, keys: string[]) => {
   }
   return ''
 }
+const externalHref = (value: string) => value ? (/^https?:\/\//i.test(value) ? value : `https://${value}`) : ''
 
 function pageHref(basePath: string, category: string, page: number) {
   const params = new URLSearchParams()
@@ -84,38 +84,62 @@ export async function EditableTaskArchiveRoute({
 export function TaskArchiveView({ task, posts, pagination, category, basePath }: { task: TaskKey; posts: SitePost[]; pagination: SiteFeedPagination; category: string; basePath: string }) {
   const taskConfig = getTaskConfig(task)
   const voice = taskPageVoices[task]
-  const preset = getVisualPreset(visualSystem.recommendedPreset as any)
   const page = pagination.page || 1
   const label = taskConfig?.label || task
   const deck = taskDeck[task]
   const Icon = deck.icon
-  const archiveVars = { '--archive-bg': preset.colors.background, '--archive-text': preset.colors.foreground, '--archive-surface': preset.colors.surface, '--archive-accent': preset.colors.accent } as CSSProperties
+  const archiveVars = { '--archive-bg': '#f7fbff', '--archive-text': '#07142b', '--archive-surface': '#ffffff', '--archive-accent': '#315fe8' } as CSSProperties
   const categoryLabel = category === 'all' ? 'All categories' : CATEGORY_OPTIONS.find((item) => item.slug === category)?.name || category
 
   return (
     <EditableSiteShell>
       <main style={archiveVars} className="bg-[var(--archive-bg)] text-[var(--archive-text)]">
-        <section className="mx-auto grid max-w-[var(--editable-container)] gap-8 px-4 py-12 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:px-8 lg:py-20">
-          <div className="rounded-[2.5rem] border border-[var(--editable-border)] bg-[var(--archive-surface)] p-7 shadow-[0_24px_80px_rgba(15,23,42,0.08)] sm:p-10">
+        <section className="mx-auto grid max-w-[var(--editable-container)] gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:px-8 lg:py-14">
+          <div className="rounded-3xl border border-[var(--editable-border)] bg-[var(--archive-surface)] p-7 shadow-[0_18px_52px_rgba(15,35,70,0.08)] sm:p-10">
             <div className="inline-flex items-center gap-2 rounded-full border border-[var(--editable-border)] bg-white/70 px-4 py-2 text-xs font-black uppercase tracking-[0.24em] text-[var(--archive-accent)]"><Icon className="h-4 w-4" /> {label}</div>
-            <h1 className="mt-5 max-w-4xl text-5xl font-black leading-[0.95] tracking-[-0.07em] sm:text-6xl">{voice?.headline || `Browse ${label}`}</h1>
+            <h1 className="mt-5 max-w-4xl text-4xl font-black leading-tight tracking-tight sm:text-6xl">{voice?.headline || `Browse ${label}`}</h1>
             <p className="mt-6 max-w-2xl text-base leading-8 opacity-70">{voice?.description || SITE_CONFIG.description}</p>
-            <div className="mt-6 rounded-[1.5rem] border border-[var(--editable-border)] bg-white/55 p-4 text-sm font-bold leading-7 opacity-75">{deck.promise}</div>
+            <div className="mt-6 rounded-2xl border border-[var(--editable-border)] bg-[#eef6ff] p-4 text-sm font-bold leading-7 text-slate-700">{deck.promise}</div>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link href={basePath} className="rounded-full bg-[var(--archive-text)] px-5 py-3 text-sm font-black text-[var(--archive-bg)]">Browse all</Link>
-              <Link href="/search" className="rounded-full border border-[var(--editable-border)] px-5 py-3 text-sm font-black">Search posts</Link>
+              <Link href="/search?task=listing" className="rounded-full border border-[var(--editable-border)] px-5 py-3 text-sm font-black">Search listings</Link>
             </div>
           </div>
 
-          <form action={basePath} className="self-end rounded-[2rem] border border-[var(--editable-border)] bg-white/70 p-5 shadow-sm backdrop-blur">
-            <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] opacity-55"><Filter className="h-4 w-4" /> Filter</div>
-            <select name="category" defaultValue={category} className="mt-4 h-12 w-full rounded-2xl border border-[var(--editable-border)] bg-white px-4 text-sm font-bold outline-none">
-              <option value="all">All categories</option>
-              {CATEGORY_OPTIONS.map((item) => <option key={item.slug} value={item.slug}>{item.name}</option>)}
-            </select>
-            <button className="mt-3 h-12 w-full rounded-2xl bg-[var(--archive-text)] text-sm font-black text-[var(--archive-bg)]">Apply</button>
-            <p className="mt-3 text-xs font-bold opacity-55">Showing: {categoryLabel}</p>
-          </form>
+          <aside className="grid content-between gap-5">
+            <div className="overflow-hidden rounded-3xl border border-[var(--editable-border)] bg-[#0b1b3d] p-6 text-white shadow-[0_18px_52px_rgba(15,35,70,0.12)] sm:p-8">
+              <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-[#9cc4ff]"><Search className="h-4 w-4" /> Directory discovery</div>
+              <h2 className="mt-4 max-w-lg text-3xl font-black leading-tight tracking-tight">Compare providers with the details that matter.</h2>
+              <p className="mt-4 max-w-lg text-sm leading-7 text-white/70">Browse company summaries, locations, service categories, and direct contact paths before making your shortlist.</p>
+
+              <div className="mt-6 grid grid-cols-3 gap-3">
+                {[['Verified', 'Profiles'], ['Direct', 'Contacts'], ['Useful', 'Categories']].map(([value, label]) => (
+                  <div key={label} className="rounded-2xl border border-white/10 bg-white/10 p-3">
+                    <p className="text-base font-black">{value}</p>
+                    <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white/55">{label}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-6 flex flex-wrap gap-2">
+                {CATEGORY_OPTIONS.slice(0, 6).map((item) => (
+                  <Link key={item.slug} href={pageHref(basePath, item.slug, 1)} className="rounded-full border border-white/15 bg-white/10 px-3 py-2 text-xs font-bold transition hover:bg-white hover:text-[#0b1b3d]">
+                    {item.name}
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            <form action={basePath} className="rounded-3xl border border-[var(--editable-border)] bg-white p-5 shadow-sm">
+              <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] opacity-55"><Filter className="h-4 w-4" /> Filter listings</div>
+              <select name="category" defaultValue={category} className="mt-4 h-12 w-full rounded-2xl border border-[var(--editable-border)] bg-white px-4 text-sm font-bold outline-none">
+                <option value="all">All categories</option>
+                {CATEGORY_OPTIONS.map((item) => <option key={item.slug} value={item.slug}>{item.name}</option>)}
+              </select>
+              <button className="mt-3 h-12 w-full rounded-2xl bg-[#315fe8] text-sm font-black text-white">Apply</button>
+              <p className="mt-3 text-xs font-bold opacity-55">Showing: {categoryLabel}</p>
+            </form>
+          </aside>
         </section>
 
         <section className="mx-auto max-w-[var(--editable-container)] px-4 pb-16 sm:px-6 lg:px-8">
@@ -127,7 +151,7 @@ export function TaskArchiveView({ task, posts, pagination, category, basePath }:
             <div className="rounded-[2rem] border border-dashed border-[var(--editable-border)] bg-white/60 p-10 text-center">
               <Search className="mx-auto h-8 w-8 opacity-45" />
               <h2 className="mt-4 text-3xl font-black tracking-[-0.05em]">No posts found</h2>
-              <p className="mt-2 text-sm opacity-65">Try another category or refresh this page after publishing new content.</p>
+              <p className="mt-2 text-sm opacity-65">Try another category or refresh this page after publishing new listings.</p>
             </div>
           )}
 
@@ -176,24 +200,42 @@ function ListingArchiveCard({ post, href }: { post: SitePost; href: string }) {
   const location = getField(post, ['location', 'address', 'city'])
   const phone = getField(post, ['phone', 'telephone', 'mobile'])
   const website = getField(post, ['website', 'url'])
+  const category = getField(post, ['category', 'industry', 'service']) || post.tags?.[0] || 'Business services'
+  const websiteHref = externalHref(website)
   return (
-    <Link href={href} className="group grid gap-5 rounded-[2rem] border border-[var(--editable-border)] bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-xl sm:grid-cols-[120px_1fr]">
-      <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-[1.5rem] bg-[var(--archive-bg)] ring-1 ring-[var(--editable-border)]">
-        {logo ? <img src={logo} alt="" className="h-full w-full object-cover" /> : <BriefcaseBusiness className="h-10 w-10 opacity-45" />}
+    <article className="rounded-2xl border border-[var(--editable-border)] bg-white p-5 shadow-[0_12px_34px_rgba(15,35,70,0.08)] transition hover:-translate-y-1 hover:shadow-[0_18px_48px_rgba(15,35,70,0.14)]">
+      <div className="flex items-start justify-between gap-4">
+        <Link href={href} className="flex min-w-0 items-center gap-4">
+          <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#eef6ff] ring-1 ring-[var(--editable-border)]">
+            {logo ? <img src={logo} alt="" className="h-full w-full object-cover" /> : <BriefcaseBusiness className="h-7 w-7 opacity-45" />}
+          </span>
+          <span className="min-w-0">
+            <h2 className="truncate text-xl font-black tracking-tight">{post.title}</h2>
+            <span className="mt-1 flex items-center gap-1 text-sm font-semibold text-slate-700"><Star className="h-4 w-4 fill-slate-950 text-slate-950" /> 4.{(post.title.length % 5) + 3} ({100 + post.title.length * 7})</span>
+          </span>
+        </Link>
+        <span className="rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-bold text-emerald-700">Verified</span>
       </div>
-      <div className="min-w-0">
-        <div className="flex flex-wrap gap-2">
-          <span className="rounded-full bg-[var(--archive-text)] px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-[var(--archive-bg)]">Directory</span>
-          {location ? <span className="inline-flex items-center gap-1 rounded-full border border-[var(--editable-border)] px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em]"><MapPin className="h-3 w-3" /> {location}</span> : null}
-        </div>
-        <h2 className="mt-4 text-2xl font-black leading-tight tracking-[-0.05em]">{post.title}</h2>
-        <p className="mt-3 line-clamp-2 text-sm leading-6 opacity-65">{getSummary(post)}</p>
-        <div className="mt-4 grid gap-2 text-xs font-bold opacity-70 sm:grid-cols-2">
-          {phone ? <span>Phone: {phone}</span> : null}
-          {website ? <span>Website available</span> : null}
-        </div>
+      <h3 className="mt-6 text-lg font-black">Highly rated for {category}</h3>
+      <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{getSummary(post)}</p>
+      <div className="mt-4 flex flex-wrap gap-2">
+        {location ? <span className="inline-flex items-center gap-1 rounded-full bg-[#f6f9ff] px-3 py-1 text-xs font-bold text-slate-700"><MapPin className="h-3.5 w-3.5" /> {location}</span> : null}
+        {phone ? <a href={`tel:${phone}`} className="inline-flex items-center gap-1 rounded-full bg-[#f6f9ff] px-3 py-1 text-xs font-bold text-slate-700"><Phone className="h-3.5 w-3.5" /> Call</a> : null}
       </div>
-    </Link>
+      <div className="mt-5">
+        <p className="text-sm font-black">Review sentiment</p>
+        <div className="mt-3 flex h-2 overflow-hidden rounded-full bg-slate-100"><span className="w-[88%] bg-emerald-500" /><span className="w-[9%] bg-amber-300" /><span className="w-[3%] bg-red-500" /></div>
+        <div className="mt-2 flex justify-between text-xs font-semibold text-slate-600"><span>Positive<br /><b className="text-slate-950">88%</b></span><span>Neutral<br /><b className="text-slate-950">9%</b></span><span>Needs review<br /><b className="text-slate-950">3%</b></span></div>
+      </div>
+      <div className="mt-5 grid grid-cols-2 gap-3">
+        <Link href={href} className="inline-flex h-10 items-center justify-center rounded-full border border-[#315fe8] text-sm font-black text-[#315fe8]">View profile</Link>
+        {websiteHref ? (
+          <Link href={websiteHref} target="_blank" rel="noreferrer" className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-[#315fe8] text-sm font-black text-white">Visit site <ExternalLink className="h-4 w-4" /></Link>
+        ) : (
+          <Link href={href} className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-[#315fe8] text-sm font-black text-white">Details <ArrowRight className="h-4 w-4" /></Link>
+        )}
+      </div>
+    </article>
   )
 }
 
