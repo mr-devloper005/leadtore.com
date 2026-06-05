@@ -1,23 +1,27 @@
 import type { CSSProperties } from 'react'
 
 export const editableRootStyle = {
-  '--slot4-page-bg': '#fff9f2',
-  '--slot4-page-text': '#111111',
-  '--slot4-panel-bg': '#fff3e8',
+  '--slot4-page-bg': '#f7fbff',
+  '--slot4-page-text': '#07142b',
+  '--slot4-panel-bg': '#eef6ff',
   '--slot4-surface-bg': '#ffffff',
-  '--slot4-muted-text': '#4f463f',
-  '--slot4-soft-muted-text': '#6b6258',
-  '--slot4-accent': '#ff6600',
-  '--slot4-accent-fill': '#ff6600',
-  '--slot4-accent-soft': '#d1e0ff',
-  '--slot4-dark-bg': '#111111',
+  '--slot4-muted-text': '#516173',
+  '--slot4-soft-muted-text': '#65758a',
+  '--slot4-accent': '#315fe8',
+  '--slot4-accent-fill': '#315fe8',
+  '--slot4-accent-soft': '#dcecff',
+  '--slot4-dark-bg': '#0b1b3d',
   '--slot4-dark-text': '#ffffff',
-  '--slot4-media-bg': '#e9e2da',
-  '--slot4-cream': '#fdf1e5',
-  '--slot4-warm': '#fff9f2',
-  '--slot4-lavender': '#d1e0ff',
-  '--slot4-gray': '#f6f6f6',
-  '--slot4-body-gradient': 'linear-gradient(180deg, #fdf1e5 0%, #fff9f2 38%, #f6f6f6 100%)',
+  '--slot4-media-bg': '#dbeafe',
+  '--slot4-cream': '#f7fbff',
+  '--slot4-warm': '#ffffff',
+  '--slot4-lavender': '#edf5ff',
+  '--slot4-gray': '#f5f7fb',
+  '--slot4-body-gradient': 'linear-gradient(180deg, #edf6ff 0%, #ffffff 34%, #f5f7fb 100%)',
+  '--editable-page-bg': '#f7fbff',
+  '--editable-page-text': '#07142b',
+  '--editable-border': 'rgba(15, 35, 70, 0.12)',
+  '--editable-container': '1200px',
 } as CSSProperties
 
 export const editablePalette = {
@@ -50,7 +54,7 @@ export const editablePalette = {
 export const editableDesignContract = {
   shell: {
     page: `min-h-screen ${editablePalette.pageBg} ${editablePalette.pageText}`,
-    section: 'mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8',
+    section: 'mx-auto w-full max-w-[var(--editable-container)] px-4 sm:px-6 lg:px-8',
     sectionY: 'py-14 sm:py-16 lg:py-20',
   },
   layout: {
@@ -89,7 +93,7 @@ export const aiLayoutRules = [
   'Change the full site color palette in editableRootStyle first; all homepage sections consume those CSS variables.',
   'Keep page structure in src/editable/sections/HomeSections.tsx so AI can redesign the whole home experience in one file.',
   'Use wide readable grids; never create skinny columns for paragraphs or cards.',
-  'Use horizontal rails for dense post browsing, like the MysteryCoder reference layout.',
+  'Use horizontal rails for dense directory browsing when cards become too dense for a single grid.',
   'Keep dynamic post fetching intact; do not replace posts with mock arrays.',
   'Use postHref() for all post links so task-specific routes keep working.',
 ] as const

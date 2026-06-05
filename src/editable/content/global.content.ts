@@ -8,29 +8,29 @@ export const globalContent = {
     baseUrl: slot4BrandConfig.baseUrl,
   },
   nav: {
-    tagline: 'Independent reading platform',
+    tagline: 'Verified business directory',
     primaryLinks: [
-      { label: 'Articles', href: '/articles' },
-      { label: 'Visuals', href: '/image-sharing' },
-      { label: 'Listings', href: '/listings' },
+      { label: 'Categories', href: '/listing' },
+      { label: 'Compare', href: '/search?task=listing' },
+      { label: 'Add business', href: '/create' },
       { label: 'Contact', href: '/contact' },
     ],
     actions: {
-      primary: { label: 'Start exploring', href: '/' },
-      secondary: { label: 'Submit', href: '/contact' },
+      primary: { label: 'Find a business', href: '/listing' },
+      secondary: { label: 'List your business', href: '/create' },
     },
   },
   footer: {
-    tagline: 'Stories, resources, and discoverable posts',
-    description: 'A connected publishing surface for articles, visuals, listings, profiles, bookmarks, and downloadable resources.',
+    tagline: 'Business discovery without the clutter',
+    description: 'Find, compare, and contact businesses with clearer listings, practical trust signals, and direct action paths.',
     columns: [
       {
         title: 'Explore',
         links: [
-          { label: 'Articles', href: '/articles' },
-          { label: 'Listings', href: '/listings' },
-          { label: 'Images', href: '/image-sharing' },
-          { label: 'PDF Library', href: '/pdf' },
+          { label: 'Business listings', href: '/listing' },
+          { label: 'Search directory', href: '/search?task=listing' },
+          { label: 'Create listing', href: '/create' },
+          { label: 'Contact support', href: '/contact' },
         ],
       },
       {
@@ -41,7 +41,7 @@ export const globalContent = {
         ],
       },
     ],
-    bottomNote: 'Built for clean discovery and connected publishing.',
+    bottomNote: 'Built for useful business discovery and confident local decisions.',
   },
   commonLabels: {
     readMore: 'Read more',
@@ -49,6 +49,6 @@ export const globalContent = {
     explore: 'Explore',
     latest: 'Latest',
     related: 'Related',
-    published: 'Published',
+    published: 'Verified',
   },
 } as const
