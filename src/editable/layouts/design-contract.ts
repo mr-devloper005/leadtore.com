@@ -64,10 +64,10 @@ export const editableDesignContract = {
     minRailCard: 'w-[140px] shrink-0 snap-start sm:w-[160px]',
   },
   type: {
-    eyebrow: 'text-xs font-extrabold uppercase tracking-[0.18em]',
-    heroTitle: 'text-4xl font-extrabold leading-[1.08] tracking-tight sm:text-5xl lg:text-[3.25rem]',
-    sectionTitle: 'text-3xl font-extrabold tracking-tight sm:text-4xl',
-    body: 'text-base leading-relaxed',
+    eyebrow: 'text-xs font-black uppercase tracking-[0.22em]',
+    heroTitle: 'text-4xl font-black leading-tight tracking-tight sm:text-5xl lg:text-6xl',
+    sectionTitle: 'text-3xl font-black tracking-tight sm:text-4xl',
+    body: 'text-base leading-8',
   },
   surface: {
     card: `rounded-2xl border ${editablePalette.border} ${editablePalette.surfaceBg} ${editablePalette.shadow}`,
@@ -87,6 +87,42 @@ export const editableDesignContract = {
     lift: 'transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_55px_rgba(0,0,0,0.14)]',
     fade: 'transition duration-300 hover:opacity-80',
   },
+} as const
+
+/**
+ * Canonical Leadtore directory theme tokens.
+ * Every editable page composes these so layout, radius, type weight,
+ * muted text, and button shapes stay identical across the site.
+ */
+export const editableUi = {
+  page: 'bg-[var(--editable-page-bg,#f7fbff)] text-[var(--editable-page-text,#07142b)]',
+  container: 'mx-auto w-full max-w-[var(--editable-container)] px-4 sm:px-6 lg:px-8',
+  sectionY: 'py-12 sm:py-14 lg:py-16',
+  eyebrow: 'text-xs font-black uppercase tracking-[0.22em] text-[#315fe8]',
+  eyebrowQuiet: 'text-xs font-black uppercase tracking-[0.22em] text-slate-500',
+  h1: 'text-4xl font-black leading-tight tracking-tight sm:text-5xl lg:text-6xl',
+  h2: 'text-3xl font-black tracking-tight sm:text-4xl',
+  h3: 'text-xl font-black tracking-tight',
+  lead: 'text-base leading-8 text-slate-600',
+  body: 'text-sm leading-7 text-slate-600',
+  muted: 'text-slate-600',
+  softMuted: 'text-slate-500',
+  card: 'rounded-2xl border border-[var(--editable-border)] bg-white shadow-[0_12px_34px_rgba(15,35,70,0.08)]',
+  cardHover: 'transition hover:-translate-y-1 hover:shadow-[0_18px_48px_rgba(15,35,70,0.14)]',
+  panel: 'rounded-3xl border border-[var(--editable-border)] bg-white shadow-[0_18px_52px_rgba(15,35,70,0.08)]',
+  panelQuiet: 'rounded-3xl border border-[var(--editable-border)] bg-white shadow-sm',
+  tint: 'bg-[#f6f9ff]',
+  tintStrong: 'bg-[#eef6ff]',
+  dark: 'rounded-3xl bg-[#0b1b3d] text-white',
+  btnPrimary: 'inline-flex items-center justify-center gap-2 rounded-full bg-[#315fe8] px-5 py-3 text-sm font-black text-white transition hover:-translate-y-0.5',
+  btnSecondary: 'inline-flex items-center justify-center gap-2 rounded-full border border-[var(--editable-border)] bg-white px-5 py-3 text-sm font-black transition hover:bg-[#f6f9ff]',
+  btnOutlineAccent: 'inline-flex items-center justify-center gap-2 rounded-full border border-[#315fe8] px-5 py-3 text-sm font-black text-[#315fe8] transition hover:bg-[#eef6ff]',
+  btnBlock: 'inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#315fe8] px-6 text-sm font-black uppercase tracking-[0.14em] text-white transition hover:-translate-y-0.5',
+  field: 'h-12 w-full rounded-2xl border border-[var(--editable-border)] bg-white px-4 text-sm font-bold text-[#07142b] outline-none transition placeholder:text-slate-400 focus:border-[#315fe8] focus:ring-4 focus:ring-[#315fe8]/10',
+  chip: 'inline-flex items-center gap-1 rounded-full bg-[#f6f9ff] px-3 py-1 text-xs font-bold text-slate-700',
+  badge: 'inline-flex items-center gap-2 rounded-full border border-[var(--editable-border)] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.22em] text-[#315fe8]',
+  accent: '#315fe8',
+  ink: '#0b1b3d',
 } as const
 
 export const aiLayoutRules = [
