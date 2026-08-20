@@ -249,7 +249,7 @@ export function EditableTimeCollections({ primaryTask, primaryRoute, posts }: Ho
           <div className="rounded-3xl border border-[var(--editable-border)] bg-[#eef6ff] p-8 shadow-sm">
             <div className="grid gap-4 sm:grid-cols-2">
               {['Define needs', 'Explore providers', 'Narrow your list', 'Contact confidently'].map((step, index) => (
-                <div key={step} className="rounded-2xl bg-white p-5">
+                <div key={step} className="rounded-2xl border border-[var(--editable-border)] bg-white p-5">
                   <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#0b1b3d] text-sm font-black text-white">{index + 1}</span>
                   <h3 className="mt-4 text-lg font-black">{step}</h3>
                   <p className="mt-2 text-sm leading-6 text-slate-600">Use clear listing data and direct actions to move one step closer to the right business.</p>
@@ -267,11 +267,11 @@ export function EditableTimeCollections({ primaryTask, primaryRoute, posts }: Ho
             <p className="mt-5 max-w-xl text-lg leading-8 text-slate-600">People use {globalContent.site.name} to cut through vague search results and connect with companies that can actually help.</p>
             <div className="mt-8 flex flex-wrap gap-5 text-2xl font-black text-slate-400"><span>Forbes</span><span>Bloomberg</span><span>Entrepreneur</span><span>BBC</span></div>
           </div>
-          <div className="rounded-3xl bg-[#f6f7f9] p-8 text-center">
-            <span className="rounded bg-white px-3 py-1 text-xs font-bold">Business Services</span>
-            <p className="mx-auto mt-6 max-w-xl text-2xl font-black leading-tight">"We compared providers faster and contacted the right company the same day."</p>
-            <p className="mt-6 text-sm font-bold">Jamie L.</p>
-            <p className="text-sm text-slate-500">Operations owner</p>
+          <div className="rounded-3xl border border-[var(--editable-border)] bg-[#f6f9ff] p-8 text-center">
+            <span className="rounded-full border border-[var(--editable-border)] bg-white px-3 py-1 text-xs font-bold">Business Services</span>
+            <p className="mx-auto mt-6 max-w-xl text-2xl font-black leading-tight tracking-tight">"We compared providers faster and contacted the right company the same day."</p>
+            <p className="mt-6 text-sm font-black">Jamie L.</p>
+            <p className="mt-1 text-sm text-slate-500">Operations owner</p>
           </div>
         </div>
       </section>
